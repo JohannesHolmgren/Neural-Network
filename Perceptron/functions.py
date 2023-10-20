@@ -1,5 +1,7 @@
 import numpy as np
 
+from Perceptron.utils import sign
+
 
 class Function:
 
@@ -8,6 +10,9 @@ class Function:
 
     @classmethod
     def backwards(cls, x): ...
+
+    @classmethod
+    def evaluate(cls, output, target): ...
 
 
 class Tanh(Function):
@@ -22,7 +27,12 @@ class Tanh(Function):
     
     @classmethod
     def evaluate(cls, output, target):
-        ...
+        if output.shape != target.shape:
+            raise ValueError('output and target must have the same shape ({output.shape} vs {target.shape})')
+        error_sum = 0
+        for i in range(output.shape[0]):
+            error_sum += abs(sign(output[i]) - target[i])
+        return 1 - error_sum / (2 * output.shape[0])
     
 
 class Softmax(Function):

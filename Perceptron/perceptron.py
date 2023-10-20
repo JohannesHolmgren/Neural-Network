@@ -4,45 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-""" 
-import functions
-from functions import Tanh
-from layer import Layer
-"""
-
-
-# ===== General functions =====
-def plot_data(dataset):
-    targets = dataset[:, 2]
-    targets = ((targets + 1) / 2).astype(int)
-    colormap = np.array(['b', 'r'])
-    plt.scatter(dataset[:, 0], dataset[:, 1], s=0.2, c=colormap[targets])
-
-
-def read_data(training_path, validation_path):
-    training_data = np.genfromtxt(training_path, delimiter=',')
-    validation_data = np.genfromtxt(validation_path, delimiter=',')
-
-    training_data, validation_data = normalize_data(
-        training_data, validation_data)
-    return training_data, validation_data
-
-
-def normalize_data(t_data, v_data):
-    # Get mean and std
-    means = np.array([np.mean(t_data[:, 0]), np.mean(t_data[:, 1])])
-    std = np.array([np.std(t_data[:, 0]), np.std(t_data[:, 1])])
-    # Update t_data
-    t_data[:, [0, 1]] = (t_data[:, [0, 1]] - means) / std
-    v_data[:, [0, 1]] = (v_data[:, [0, 1]] - means) / std
-    return t_data, v_data
-
-
-def sign(x):
-    return -1 if x < 0 else 1
-
-
-# =============================
+from Perceptron.functions import Tanh
+from Perceptron.layer import Layer
 
 
 class Perceptron:
@@ -57,15 +20,6 @@ class Perceptron:
 
         self.eta = eta
         self.alpha = alpha
-
-        # For plotting etc.
-        self.training_scores = []
-        self.validation_scores = []
-        # self.best_weights = [self.weights[0], self.weights[-1]]
-        # self.best_thresholds = [self.layers[1].thresholds, self.layers[-1].thresholds]
-        self.best_validation_score = 100
-        # self.early_stopping_counter = 0
-        # self.early_stopping_threshold = 5
 
     def add(self, layer):
         self.layers.append(layer)
@@ -145,17 +99,7 @@ class Perceptron:
         predicted = self.forward()
         return predicted
 
-    def train(self, training_data, validation_data, epochs=10, statistics=True, training_method='batch'):
-
-
-        output_values = []
-        targets = []
-        for row in training_data:
-            input_data, target = self.split_data(row)
-            self.layers[0].nodes = input_data.copy()
-            targets.append(target)
-            output_values.append(self.forward())
-        print(self.layers[-1].activation_function.evaluate(np.array(output_values), np.array(targets)))
+    def train(self, training_data, validation_data, epochs=10, training_method='batch'):
 
         for i in range(epochs):
             if training_method == 'batch':
@@ -167,30 +111,8 @@ class Perceptron:
             elif training_method == 'stochastic_batch':
                 self.stochastic_batch(training_data, batch_size=8)
 
-            output_values = []
-            targets = []
-            for row in training_data:
-                input_data, target = self.split_data(row)
-                self.layers[0].nodes = input_data.copy()
-                targets.append(target)
-                output_values.append(self.forward())
-            print(self.layers[-1].activation_function.evaluate(np.array(output_values), np.array(targets)))
-            
-
-            # Statistics
-            if statistics:
-                validation_score = self.evaluate(validation_data)
-                if i % 10 == 0:
-                    print(f'Epoch {i}: {validation_score}')
-                self.validation_scores.append(validation_score)
-                if validation_score < self.best_validation_score:
-                    self.best_weights = [
-                        self.weights[0].copy(),
-                        self.weights[-1].copy()]
-                    self.best_thresholds = [
-                        self.layers[1].thresholds.copy(),
-                        self.layers[-1].thresholds.copy()]
-                    self.best_validation_score = validation_score
+            validation_score = self.evaluate(training_data)
+            print(f'Score: {validation_score}')
 
     def sequential(self, training_data):
         ''' train the network sequentially (update weights
@@ -229,7 +151,7 @@ class Perceptron:
         temp = training_data.copy()
         np.random.shuffle(temp)
         for batch in np.array_split(temp, len(temp)/batch_size):
-            self.batch(batch)
+            self.batch(batch, batch_size)
 
     def split_data(self, data_vector):
         ''' Split the vector into input and target '''
@@ -239,69 +161,22 @@ class Perceptron:
         return input_data, target
 
     def evaluate(self, validation_data):
-        error_sum = 0
-        for validation_vector in validation_data:
-            input_data, target = self.split_data(validation_vector)
-            output = self.predict(input_data)
-            error_sum += abs(sign(output) - target)
-        return error_sum / (2 * validation_data.shape[0])
+        size = (validation_data.shape[0], self.layers[-1].nodes.shape[0])
+        output_values = np.zeros(size)
+        targets = np.zeros(size)
+        for i, row in enumerate(validation_data):
+            input_vector, target = self.split_data(row)
+            targets[i,:] = target
+            output = self.predict(input_vector)
+            output_values[i,:] = output
+        return self.layers[-1].activation_function.evaluate(output_values, targets)
     
-    def plot_epoch(self):
-        plt.plot(self.validation_scores, 'r')
-        plt.xlabel('Epochs')
-        plt.ylabel('Classification Error')
-        plt.xticks(range(0, EPOCHS, 10))
-        plt.show()
 
-    def save_parameters(self):
-        w1 = pd.DataFrame(self.best_weights[0])
-        w2 = pd.DataFrame(self.best_weights[1].transpose())
-        t1 = pd.DataFrame(self.best_thresholds[0])
-        t2 = pd.DataFrame(self.best_thresholds[1])
-        w1.to_csv('saves/w1.csv', index=False, header=False)
-        w2.to_csv('saves/w2.csv', index=False, header=False)
-        t1.to_csv('saves/t1.csv', index=False, header=False)
-        t2.to_csv('saves/t2.csv', index=False, header=False)
-
-
-if __name__ == '__main__':
-
-
-    if False:
-
-        p = Perceptron(0.05)
-        p.add(Layer(2))
-        p.add(Layer(12))
-        p.add(Layer(1))
-        p.init_weights()
-
-        training_data, validation_data = read_data(
-            'training_set.csv', 'validation_set.csv')
-        
-        p.train(training_data, validation_data, epochs=100, training_method='stochastic_batch')
-
-
-    if True:
-        ETA = 0.001
-        INPUT_SIZE = 2
-        HIDDEN_SIZE = 50
-        OUTPUT_SIZE = 1
-        EPOCHS = 100
-
-        training_data, validation_data = read_data(
-            'training_set.csv', 'validation_set.csv')
-
-        p = Perceptron(ETA)
-        p.add(Layer(INPUT_SIZE, Tanh))
-        p.add(Layer(HIDDEN_SIZE, Tanh))
-        p.add(Layer(OUTPUT_SIZE, Tanh))
-        p.init_weights()
-
-        p.train(training_data, validation_data, epochs=EPOCHS, training_method='stochastic_batch')
-
-        vs = p.evaluate(validation_data)
-        print(f'Final validation score: {vs}, best validation score: {p.best_validation_score}')
-
-        # p.save_parameters()
-
-        # p.plot_epoch()
+# TODO
+# Update batch to use batch size
+# Explain eta and alpha and give both a standard value
+# Look if anything more can be extracted to other classes
+# Make sure variable names do not differ
+# Good comments for everything
+# Make into a package
+# Look at imports to make them independent of where program is run

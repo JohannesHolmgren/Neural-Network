@@ -1,8 +1,9 @@
 import numpy as np
 
-from Perceptron.perceptron import Perceptron
-from Perceptron.layer import Layer
 from Perceptron.functions import Softmax, Tanh
+from Perceptron.layer import Layer
+from Perceptron.perceptron import Perceptron
+
 
 def load_iris_data(data_path, label_path):
     iris_data = np.genfromtxt(data_path, delimiter=',')
@@ -35,4 +36,4 @@ if __name__ == '__main__':
     network.add(Layer(3, Softmax))  # Output layer
     network.init_weights()
 
-    network.train(data, data, epochs=100, statistics=False, training_method='sequential')
+    network.train(data, data, epochs=100, training_method='sequential')
