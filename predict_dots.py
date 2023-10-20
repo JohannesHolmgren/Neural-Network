@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from Perceptron.functions import Softmax, Tanh
+from Perceptron.functions import Tanh
 from Perceptron.layer import Layer
 from Perceptron.perceptron import Perceptron
 
@@ -50,11 +50,6 @@ if __name__ == '__main__':
         p.add(Layer(OUTPUT_SIZE, Tanh))
         p.init_weights()
 
-        p.train(training_data, validation_data, epochs=EPOCHS, training_method='stochastic_batch')
+        p.train(training_data, validation_data, epochs=EPOCHS, training_method='batch')
 
         vs = p.evaluate(validation_data)
-        print(f'Final validation score: {vs}, best validation score: {p.best_validation_score}')
-
-        # p.save_parameters()
-
-        # p.plot_epoch()

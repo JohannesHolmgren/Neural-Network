@@ -19,7 +19,9 @@ def onehot(data, n_labels):
         onehot_data[i, index] = 1
     return onehot_data
 
-
+def split(data, frac=0.8):
+    split_index = int(data.shape[0]*frac)
+    return data[:split_index], data[split_index:]
 
 if __name__ == '__main__':
     
@@ -28,12 +30,14 @@ if __name__ == '__main__':
     iris_labels = onehot(iris_labels, 3)
 
     data = np.append(iris_data, iris_labels, axis=1)
+    training_data, validation_data = split(data, 0.8)
 
     # Build neural network
-    network = Perceptron(0.001)
+    network = Perceptron(learning_rate=0.001)
     network.add(Layer(4, Tanh))     # Input layer
+    network.add(Layer(10, Tanh))    # Hidden layer
     network.add(Layer(10, Tanh))    # Hidden layer
     network.add(Layer(3, Softmax))  # Output layer
     network.init_weights()
 
-    network.train(data, data, epochs=100, training_method='sequential')
+    network.train(training_data, validation_data, epochs=50, training_method='sequential')

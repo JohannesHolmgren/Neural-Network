@@ -12,14 +12,14 @@ class Perceptron:
     ''' A class representing a perceptron with hidden layers
         using backpropagation for updating the weights '''
 
-    def __init__(self, eta, alpha=0.9):
+    def __init__(self, learning_rate=0.001):
         self.layers = []
         self.weights = []
         self.dweights = []
         self.prev_dweights = []
 
-        self.eta = eta
-        self.alpha = alpha
+        self.learning_rate = learning_rate
+        self.alpha = 0.9
 
     def add(self, layer):
         self.layers.append(layer)
@@ -72,12 +72,12 @@ class Perceptron:
         ''' Update all weights and thresholds '''
 
         # Update weights to output layer
-        self.prev_dweights[-1] = self.eta * self.dweights[-1] + self.alpha * self.prev_dweights[-1]
+        self.prev_dweights[-1] = self.learning_rate * self.dweights[-1] + self.alpha * self.prev_dweights[-1]
         self.weights[-1] = np.add(self.weights[-1], self.prev_dweights[-1])
         self.dweights[-1] = np.zeros_like(self.dweights[-1])
 
         # Output output thresholds
-        output_dthreshold = (self.eta * self.layers[-1].dthreshold)
+        output_dthreshold = (self.learning_rate * self.layers[-1].dthreshold)
         self.layers[-1].thresholds -= output_dthreshold
         self.layers[-1].dthreshold = np.zeros_like(self.layers[-1].dthreshold)
 
@@ -85,12 +85,12 @@ class Perceptron:
         for i in range(len(self.layers)-2, 0, -1):
 
             # Update weights
-            self.prev_dweights[i-1] = self.eta * self.dweights[i-1] + self.alpha * self.prev_dweights[i-1]
+            self.prev_dweights[i-1] = self.learning_rate * self.dweights[i-1] + self.alpha * self.prev_dweights[i-1]
             self.weights[i-1] = np.add(self.weights[i-1], self.prev_dweights[i-1])
             self.dweights[i-1] = np.zeros_like(self.dweights[i-1])
 
             # Update thresholds
-            dthreshold = (self.eta * self.layers[i].dthreshold)
+            dthreshold = (self.learning_rate * self.layers[i].dthreshold)
             self.layers[i].thresholds -= dthreshold
             self.layers[i].dthreshold = np.zeros_like(self.layers[i].dthreshold)
 
@@ -99,20 +99,20 @@ class Perceptron:
         predicted = self.forward()
         return predicted
 
-    def train(self, training_data, validation_data, epochs=10, training_method='batch'):
-
+    def train(self, training_data, validation_data=None, epochs=10, training_method='batch', batch_size=8):
         for i in range(epochs):
-            if training_method == 'batch':
-                self.batch(training_data, batch_size=8)
-            elif training_method == 'sequential':
+            if training_method == 'sequential':
                 self.sequential(training_data)
             elif training_method == 'stochastic_sequential':
                 self.stochastic_sequential(training_data)
+            elif training_method == 'batch':
+                self.batch(training_data, batch_size)
             elif training_method == 'stochastic_batch':
-                self.stochastic_batch(training_data, batch_size=8)
+                self.stochastic_batch(training_data, batch_size)
 
-            validation_score = self.evaluate(training_data)
-            print(f'Score: {validation_score}')
+            if validation_data is not None:
+                validation_score = self.evaluate(validation_data)
+                print(f'Epoch {i+1} score: {validation_score}')
 
     def sequential(self, training_data):
         ''' train the network sequentially (update weights
@@ -136,31 +136,35 @@ class Perceptron:
     def batch(self, training_data, batch_size):
         ''' train the network as a batch of entire dataset
             and update weights and thresholds after the batch. '''
-        for training_vector in training_data:
-            input_data, target = self.split_data(training_vector)
-            self.layers[0].nodes = input_data.copy()
-            self.forward()
-            self.backwards(target)
-        # Update after entire batch is iterated
-        self.update()
+        for batch in np.array_split(training_data, len(training_data)/batch_size):
+            for training_vector in batch:
+                input_data, target = self.split_data(training_vector)
+                self.layers[0].nodes = input_data.copy()
+                self.forward()
+                self.backwards(target)
+            # Update after entire batch is iterated
+            self.update()
 
-    def stochastic_batch(self, training_data, batch_size=512):
+    def stochastic_batch(self, training_data, batch_size):
         ''' traing the network as a batch of a portion of the dataset.
             The batch is chosen randomly and weights and thresholds are
             updated after the batch. '''
-        temp = training_data.copy()
-        np.random.shuffle(temp)
-        for batch in np.array_split(temp, len(temp)/batch_size):
-            self.batch(batch, batch_size)
+        shuffled_data = training_data.copy()
+        np.random.shuffle(shuffled_data)
+        self.batch(shuffled_data, batch_size)
 
     def split_data(self, data_vector):
-        ''' Split the vector into input and target '''
+        ''' Split the vector into input and target 
+            using the size of the input layer. '''
         input_size = self.layers[0].size
         input_data = data_vector[0:input_size]
         target = data_vector[input_size:]
         return input_data, target
 
     def evaluate(self, validation_data):
+        ''' Evaluate the model on the validation data by feeding 
+            it to the model and then comparing the output with the targets,
+            using the evaluate method on the activation function. '''
         size = (validation_data.shape[0], self.layers[-1].nodes.shape[0])
         output_values = np.zeros(size)
         targets = np.zeros(size)
@@ -173,8 +177,8 @@ class Perceptron:
     
 
 # TODO
-# Update batch to use batch size
-# Explain eta and alpha and give both a standard value
+# Remove the need for calling init_weights 
+# Explain learning_rate and alpha and give both a standard value
 # Look if anything more can be extracted to other classes
 # Make sure variable names do not differ
 # Good comments for everything
