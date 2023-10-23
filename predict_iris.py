@@ -20,8 +20,10 @@ def onehot(data, n_labels):
     return onehot_data
 
 def split(data, frac=0.8):
-    split_index = int(data.shape[0]*frac)
-    return data[:split_index], data[split_index:]
+    shuffled_data = data.copy()
+    np.random.shuffle(shuffled_data)
+    split_index = int(shuffled_data.shape[0]*frac)
+    return shuffled_data[:split_index], shuffled_data[split_index:]
 
 if __name__ == '__main__':
     
