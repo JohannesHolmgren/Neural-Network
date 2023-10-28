@@ -1,7 +1,7 @@
 # from Perceptron import functions
 import numpy as np
 
-from Perceptron import functions
+# from Perceptron import functions
 
 
 class Layer:
@@ -43,14 +43,42 @@ class Layer:
 class ConvolutionLayer:
 
 
-    def __init__(self, size, stride, padding):
-        self.size = size
-        self.stride = stride
-        self.padding = padding
-        self.kernel = np.array(size)
+    def __init__(self, size):
+        self.size = size    # Kernel size
+        self.stride = (1, 1)
+        self.padding = (0, 0, 0, 0)  # Top Right Bottom Left
+        self.kernel = np.ones(size)
+
+    def pad(self, image):
+        padded_image = image.copy()
+        # Top
+        top_padding = np.zeros((self.padding[0], padded_image.shape[1]))
+        padded_image = np.vstack((top_padding, padded_image))
+        # Right
+        right_padding = np.zeros((padded_image.shape[0], self.padding[1]))
+        padded_image = np.hstack((padded_image, right_padding))
+        # Bottom
+        bot_padding = np.zeros((self.padding[2], padded_image.shape[1]))
+        padded_image = np.vstack((padded_image, bot_padding))
+        # Left
+        left_padding = np.zeros((padded_image.shape[0], self.padding[3]))
+        padded_image = np.hstack((left_padding, padded_image))
+        # iterate from upper left to bottom right with stride size
+        return padded_image
 
     def forward(self, image):
         ''' Image is a 2d-matrix '''
-        ...
-        # Add padding
-        # iterate from upper left to bottom right with stride size
+        padded_image = self.pad(image)
+
+        height = padded_image.shape[0] - self.size[0] + 1
+        width  = padded_image.shape[1] - self.size[1] + 1
+        feature_map = np.zeros([height, width])
+
+        for j in range(0, height, self.stride[0]):
+            for i in range(0, width, self.stride[1]):
+                m = padded_image[j:j+self.size[0], i:i+self.size[1]]
+                feature_map[j, i] = np.sum(np.multiply(self.kernel, m))
+        print(feature_map)
+
+c = ConvolutionLayer((3, 3))
+c.forward(np.array([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]))
