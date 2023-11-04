@@ -184,3 +184,4 @@ class Perceptron:
 # Good comments for everything
 # Make into a package
 # Look at imports to make them independent of where program is run
+# Add save to and load from file
