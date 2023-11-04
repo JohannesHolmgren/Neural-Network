@@ -1,5 +1,4 @@
 # Neural-Network
-# Neural-Network
 This is a small neural network package using backpropagation for updating weights and thresholds. It roots from a course in Artificial Neural Networks at Chalmers University of Technology.
 
 ## Features
