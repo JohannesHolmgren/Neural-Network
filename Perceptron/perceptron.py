@@ -1,11 +1,6 @@
 import math
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-
-from Perceptron.functions import Tanh
-from Perceptron.layer import Layer
 
 
 class Perceptron:
@@ -95,11 +90,20 @@ class Perceptron:
             self.layers[i].dthreshold = np.zeros_like(self.layers[i].dthreshold)
 
     def predict(self, input_vector):
+        ''' Predicts the output for the input_vector '''
         self.layers[0].nodes = input_vector.copy()
         predicted = self.forward()
         return predicted
 
     def train(self, training_data, validation_data=None, epochs=10, training_method='batch', batch_size=8):
+        ''' Trains the perceptron on the training_data for 'epochs' number of times.
+            validation_data:    Used to track the validation score every epoch.
+            epochs:             The number of repetitions of training on the training data.
+            training_method:    one of "sequential"|"stochastic_sequential"|"batch"|"stochastic_batch". 
+                                decides the training method.
+            batch_size:         The number of elements in each batch (only relevant if "batch" or 
+                                "stochastic_batch" is used).
+        '''
         for i in range(epochs):
             if training_method == 'sequential':
                 self.sequential(training_data)
@@ -162,9 +166,10 @@ class Perceptron:
         return input_data, target
 
     def evaluate(self, validation_data):
-        ''' Evaluate the model on the validation data by feeding 
-            it to the model and then comparing the output with the targets,
-            using the evaluate method on the activation function. '''
+        ''' Evaluate the model on the validation data by feeding it to 
+            the model and then comparing the output with the targets, using 
+            the evaluate method defined in the output activation function.
+        '''
         size = (validation_data.shape[0], self.layers[-1].nodes.shape[0])
         output_values = np.zeros(size)
         targets = np.zeros(size)
