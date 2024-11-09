@@ -1,7 +1,7 @@
 # from Perceptron import functions
 import numpy as np
 
-# from Perceptron import functions
+from Perceptron import functions
 
 
 class Layer:

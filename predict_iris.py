@@ -35,11 +35,11 @@ if __name__ == '__main__':
     training_data, validation_data = split(data, 0.8)
 
     # Build neural network
-    network = Perceptron(learning_rate=0.001)
+    network = Perceptron(learning_rate=0.0005)
     network.add(Layer(4, Tanh))     # Input layer
     network.add(Layer(10, Tanh))    # Hidden layer
     network.add(Layer(10, Tanh))    # Hidden layer
     network.add(Layer(3, Softmax))  # Output layer
     network.init_weights()
 
-    network.train(training_data, validation_data, epochs=50, training_method='sequential')
+    network.train(training_data, validation_data, epochs=200, training_method='sequential')
